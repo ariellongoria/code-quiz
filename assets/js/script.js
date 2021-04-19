@@ -26,23 +26,26 @@ var questions = [
     },
 ];
 
-var score;
 var questionIndex = 0;
-var timeLeft = 120;
+var timeLeft = 60;
 var highScores = [];
 
 var startButton = document.querySelector("#start-button");
 var startPage = document.querySelector("#start-page");
 var quizBox = document.querySelector(".quiz");
 var highScoreButton = document.querySelector("#high-scores-button");
+var endQuizScreen = document.querySelector(".end-screen");
 var highScoreScreen = document.querySelector(".high-scores");
 var countdownTimer = document.getElementById("time-left");
 
 // Starts timer
 var beginTimer = function () {
     var newTimer = setInterval(function () {
-        if (timeLeft < 0) {
+        if (timeLeft <= 0) {
             clearInterval(newTimer);
+            if (timeLeft < 0) {
+                timeLeft = 0;
+            }
             endQuiz();
         } else if (questionIndex >= questions.length) {
             clearInterval(newTimer);
@@ -82,24 +85,21 @@ var renderQuestion = function (index) {
     }
 };
 
-var submitScore = function (event) {
-    event.preventDefault();
-    var playerName = document.querySelector("input[name = 'player-name']");
-    var newHighScore = {
-        player: playerName.value,
-        score: timeLeft,
-    };
-    highScores.push(newHighScore);
-    saveScores();
+var renderHighScores = function () {
+    endQuizScreen.innerHTML = "";
+    quizBox.innerHTML = "";
+    startPage.innerHTML = "";
+    var goBackButton = document.createElement("button");
+    goBackButton.textContent = "Go Back";
+    highScoreScreen.appendChild(goBackButton);
+    var highScoresList = document.createElement("ul");
+    for (i = 0; i < highScores.length; i++) {
+        var highScoreElement = document.createElement("li");
+        highScoreElement.textContent = highScores[i].player + "\t" + highScores[i].score;
+        highScoresList.appendChild(highScoreElement);
+    }
+    highScoreScreen.appendChild(highScoresList);
 };
-
-var saveScores = function () {
-    localStorage.setItem("scores", JSON.stringify(highScores));
-};
-
-var renderHighScores = function () {};
-
-var endQuizScreen = document.querySelector(".end-screen");
 
 var renderEndScreen = function () {
     var form = document.createElement("form");
@@ -114,12 +114,54 @@ var renderEndScreen = function () {
     endQuizScreen.appendChild(form);
 };
 
+var submitScore = function (event) {
+    event.preventDefault();
+    var playerName = document.querySelector("input[name = 'player-name']");
+    if (playerName.value) {
+        var newHighScore = {
+            player: playerName.value,
+            score: timeLeft,
+        };
+    }
+    highScores.push(newHighScore);
+    saveScores();
+    renderHighScores();
+};
+
+var saveScores = function () {
+    localStorage.setItem("scores", JSON.stringify(highScores));
+};
+
+var loadScores = function () {
+    highScores = JSON.parse(localStorage.getItem("scores"));
+};
+
+//Starts the quiz
+var startQuiz = function () {
+    startPage.innerHTML = "";
+    score = 0;
+    initializeQuestions();
+    renderQuestion(questionIndex);
+};
+
 var endQuiz = function () {
     quizBox.innerHTML = "";
     console.log(timeLeft);
     countdownTimer.textContent = timeLeft;
     renderEndScreen();
 };
+
+loadScores();
+
+startButton.addEventListener("click", startQuiz);
+startButton.addEventListener("click", beginTimer);
+highScoreButton.addEventListener("click", renderHighScores);
+highScoreScreen.addEventListener("click", function () {
+    highScoreScreen.innerHTML = "";
+    startPage.innerHTML =
+        "<p>Instructions</p><p>Try to answer the following code related questions within the time limit. Keep in mind that incorrect answers will penalize your time/score by ten seconds!</p><button type='button' id='start-button'>Start Quiz</button>";
+});
+endQuizScreen.addEventListener("submit", submitScore);
 
 quizBox.addEventListener("click", function (event) {
     console.log(questionIndex);
@@ -138,16 +180,3 @@ quizBox.addEventListener("click", function (event) {
         endQuiz();
     }
 });
-
-//Starts the quiz
-var startQuiz = function () {
-    startPage.innerHTML = "";
-    score = 0;
-    initializeQuestions();
-    renderQuestion(questionIndex);
-};
-
-startButton.addEventListener("click", startQuiz);
-startButton.addEventListener("click", beginTimer);
-highScoreButton.addEventListener("click", renderHighScores);
-endQuizScreen.addEventListener("submit", submitScore);
