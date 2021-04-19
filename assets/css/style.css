@@ -106,3 +106,8 @@ button:focus {
 .high-scores ul li:nth-child(odd) {
     background-color: rgba(211, 61, 61, 0.672);
 }
+
+input {
+    height: 50px;
+    width: 300px;
+}

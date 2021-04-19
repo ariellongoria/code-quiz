@@ -38,23 +38,21 @@ var endQuizScreen = document.querySelector(".end-screen");
 var highScoreScreen = document.querySelector(".high-scores");
 var countdownTimer = document.getElementById("time-left");
 
-// Starts timer
-var beginTimer = function () {
-    var newTimer = setInterval(function () {
-        if (timeLeft <= 0) {
-            clearInterval(newTimer);
-            if (timeLeft < 0) {
-                timeLeft = 0;
-            }
-            endQuiz();
-        } else if (questionIndex >= questions.length) {
-            clearInterval(newTimer);
-        } else {
-            countdownTimer.innerHTML = timeLeft + " seconds";
-            timeLeft -= 1;
-        }
-    }, 1000);
+var renderStartPage = function () {
+    var instructionTitle = document.createElement("p");
+    instructionTitle.textContent = "Instructions";
+    startPage.appendChild(instructionTitle);
+    var instructionText = document.createElement("p");
+    instructionText.textContent =
+        "Try to answer the following code related questions within the time limit. Keep in mind that incorrect answers will penalize your time/score by ten seconds!";
+    startPage.appendChild(instructionText);
+    var startButton = document.createElement("button");
+    startButton.id = "start-button";
+    startButton.textContent = "Start Quiz";
+    startPage.appendChild(startButton);
 };
+
+// Starts timer
 
 //Initializes the quiz structure
 var initializeQuestions = function () {
@@ -89,16 +87,19 @@ var renderHighScores = function () {
     endQuizScreen.innerHTML = "";
     quizBox.innerHTML = "";
     startPage.innerHTML = "";
-    var goBackButton = document.createElement("button");
-    goBackButton.textContent = "Go Back";
-    highScoreScreen.appendChild(goBackButton);
-    var highScoresList = document.createElement("ul");
-    for (i = 0; i < highScores.length; i++) {
-        var highScoreElement = document.createElement("li");
-        highScoreElement.textContent = highScores[i].player + "\t" + highScores[i].score;
-        highScoresList.appendChild(highScoreElement);
+    if (highScoreScreen.innerHTML === "") {
+        var goBackButton = document.createElement("button");
+        goBackButton.textContent = "Go Back";
+        highScoreScreen.appendChild(goBackButton);
+        var highScoresList = document.createElement("ul");
+        highScores = highScores || [];
+        for (i = 0; i < highScores.length; i++) {
+            var highScoreElement = document.createElement("li");
+            highScoreElement.textContent = highScores[i].player + "\t\t\t\t\t" + highScores[i].score;
+            highScoresList.appendChild(highScoreElement);
+        }
+        highScoreScreen.appendChild(highScoresList);
     }
-    highScoreScreen.appendChild(highScoresList);
 };
 
 var renderEndScreen = function () {
@@ -122,9 +123,12 @@ var submitScore = function (event) {
             player: playerName.value,
             score: timeLeft,
         };
+        highScores = highScores || [];
+        highScores.push(newHighScore);
     }
-    highScores.push(newHighScore);
+
     saveScores();
+
     renderHighScores();
 };
 
@@ -139,7 +143,22 @@ var loadScores = function () {
 //Starts the quiz
 var startQuiz = function () {
     startPage.innerHTML = "";
-    score = 0;
+    questionIndex = 0;
+    timeLeft = 60;
+    var newTimer = setInterval(function () {
+        if (timeLeft <= 0) {
+            clearInterval(newTimer);
+            if (timeLeft < 0) {
+                timeLeft = 0;
+            }
+            endQuiz();
+        } else if (questionIndex >= questions.length) {
+            clearInterval(newTimer);
+        } else {
+            countdownTimer.innerHTML = timeLeft + " seconds";
+            timeLeft -= 1;
+        }
+    }, 1000);
     initializeQuestions();
     renderQuestion(questionIndex);
 };
@@ -153,22 +172,23 @@ var endQuiz = function () {
 
 loadScores();
 
-startButton.addEventListener("click", startQuiz);
-startButton.addEventListener("click", beginTimer);
+renderStartPage();
+
+startPage.addEventListener("click", startQuiz);
+//startPage.addEventListener("click", beginTimer);
 highScoreButton.addEventListener("click", renderHighScores);
 highScoreScreen.addEventListener("click", function () {
     highScoreScreen.innerHTML = "";
-    startPage.innerHTML =
-        "<p>Instructions</p><p>Try to answer the following code related questions within the time limit. Keep in mind that incorrect answers will penalize your time/score by ten seconds!</p><button type='button' id='start-button'>Start Quiz</button>";
+    renderStartPage();
 });
 endQuizScreen.addEventListener("submit", submitScore);
 
 quizBox.addEventListener("click", function (event) {
     console.log(questionIndex);
     if (event.target.getAttribute("is-correct") === "true") {
-        console.log("poggers");
+        console.log("correct");
     } else {
-        console.log("not poggers");
+        console.log("wrong");
         timeLeft -= 10;
     }
     if (questionIndex < questions.length - 1) {
